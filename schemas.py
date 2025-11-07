@@ -1,48 +1,60 @@
 """
-Database Schemas
+Database Schemas for DiveBuddy
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB. The collection
+name is the lowercase of the class name (e.g., Diver -> "diver").
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from typing import List, Literal, Optional
+from pydantic import BaseModel, Field, HttpUrl
 
-# Example schemas (replace with your own):
 
-class User(BaseModel):
+class Diver(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Divers collection schema
+    Collection: "diver"
     """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str = Field(..., description="Display name")
+    location: str = Field(..., description="Primary dive location")
+    level: Literal[
+        "Open Water",
+        "Advanced Open Water",
+        "Rescue Diver",
+        "Divemaster",
+        "Instructor",
+    ] = Field(..., description="Certification level")
+    experience: int = Field(0, ge=0, description="Logged dives count")
+    bio: Optional[str] = Field(None, description="Short bio")
+    image: Optional[HttpUrl] = Field(None, description="Profile image URL")
+    interests: List[str] = Field(default_factory=list, description="Dive interests/tags")
+    availability: Optional[str] = Field(None, description="Dates or range (free text)")
 
-class Product(BaseModel):
+
+class Swipe(BaseModel):
     """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Swipes collection schema
+    Collection: "swipe"
     """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    swiper_id: str = Field(..., description="User (diver) who performed the swipe")
+    target_id: str = Field(..., description="User (diver) who was swiped on")
+    direction: Literal["left", "right"] = Field(..., description="Swipe direction")
 
-# Add your own schemas here:
-# --------------------------------------------------
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Match(BaseModel):
+    """
+    Matches collection schema
+    Collection: "match"
+    """
+    user_a_id: str = Field(..., description="First user id")
+    user_b_id: str = Field(..., description="Second user id")
+    last_message_preview: Optional[str] = Field(None, description="Preview of last message")
+
+
+class Message(BaseModel):
+    """
+    Messages collection schema
+    Collection: "message"
+    """
+    match_id: str = Field(..., description="Related match id")
+    sender_id: str = Field(..., description="User who sent the message")
+    content: str = Field(..., description="Message text content")
